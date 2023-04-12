@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:food_recipe_app/model.dart';
+import 'package:http/http.dart' as http;
  class Home extends StatefulWidget {
    const Home({Key? key}) : super(key: key);
 
@@ -7,9 +11,34 @@ import 'package:flutter/material.dart';
  }
 String search='';
  class _HomeState extends State<Home> {
+   List<RecipeModel> recipelist = <RecipeModel>[];
+   TextEditingController searchController =new TextEditingController();
+
+  Future<void>getRecipe(String query)async {
+     String url='https://api.edamam.com/search?q=$query&app_id=ad06d07c&app_key=e3d8df37a605c84f260617076cf7db42';
+     http.Response response = await http.get(Uri.parse(url));
+     Map data =jsonDecode(response.body);
+     // log(data.toString());// jo bhi data hoga woh string m hona chahiye
+    data["hits"].forEach((element){
+      RecipeModel recipeModel = new RecipeModel();
+      recipeModel= RecipeModel.fromMap(element["recipe"]);
+      recipelist.add(recipeModel);
+      // log(recipelist.toString());
+
+
+    });
+    recipelist.forEach((recipe) {
+      print(recipe.applabel);
+    });
+   }
+   @override
+  void initState() {
+    // TODO: implement initState
+    //  getRecipe("samosa");
+    super.initState();
+  }
    @override
    Widget build(BuildContext context) {
-     TextEditingController searchController =new TextEditingController();
      return SafeArea(child:Scaffold(
        body:Stack(
          children: [
@@ -44,9 +73,13 @@ String search='';
                    ),
                    GestureDetector(
                      onTap: () {
-                       setState(() {
-                         search = searchController.text;
-                       });
+                       if((searchController.text).replaceAll("", "")==""){
+                         print('blank');
+                       }else{
+                         setState(() {
+                           search = searchController.text;
+                         });
+                       }
                      },
                      child: Icon(
                        Icons.search,
@@ -63,6 +96,7 @@ String search='';
                        onSubmitted: (value) {
                          setState(() {
                            search = value;
+                           getRecipe(searchController.text);
                          });
                        },
                        // onsubmitted isliye use krte hein taki textinputaction se input string value ko use kr sake serach k liye
@@ -103,3 +137,6 @@ String search='';
      ));
    }
  }
+//e3d8df37a605c84f260617076cf7db42
+//ad06d07c
+//https://api.edamam.com/search?q=chicken&app_id=${YOUR_APP_ID}&app_key=${YOUR_APP_KEY}&from=0&to=3&calories=591-722&health=alcohol-free
